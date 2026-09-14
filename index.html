@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Midnight Circuit — 3D Street Racer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#06b6d4">
+  
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "three/examples/jsm/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+    "three/": "https://unpkg.com/three@0.160.0/"
+  }
+}
+</script>
+  <style>
+  /* 1:1 Canvas & 3D Touch Fidelity */
+  canvas {
+    touch-action: none;
+    -webkit-touch-callout: none;
+  }
+</style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+
+<style>
+  canvas { touch-action: none; -webkit-touch-callout: none; }
+</style>
+</head>
+<body>
+
+<div id="game-container"></div>
+
+<!-- START SCREEN -->
+<div id="start-screen">
+  <div class="glow-bg"></div>
+  <div class="start-panel">
+    <h1 class="title">MIDNIGHT<span>CIRCUIT</span></h1>
+    <p class="subtitle">A fully-lit 3D street race</p>
+
+    <div class="controls-grid">
+      <div class="control-card">
+        <div class="keys"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span></div>
+        <div class="control-label">Drive &amp; Steer</div>
+      </div>
+      <div class="control-card">
+        <div class="keys"><span class="key wide">SPACE</span></div>
+        <div class="control-label">Handbrake</div>
+      </div>
+      <div class="control-card">
+        <div class="keys"><span class="key wide">C</span></div>
+        <div class="control-label">Switch Camera</div>
+      </div>
+      <div class="control-card">
+        <div class="keys"><span class="key wide">R</span></div>
+        <div class="control-label">Reset Car</div>
+      </div>
+    </div>
+
+    <button id="start-btn">START ENGINE</button>
+    <p class="hint">Best experienced with sound on 🔊</p>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div class="hud-top-left">
+    <div class="lap-box">
+      <span class="lap-label">LAP</span>
+      <span id="lap-count">1<span class="lap-total">/3</span></span>
+    </div>
+    <div class="timer-box">
+      <span id="timer">00:00.00</span>
+    </div>
+  </div>
+
+  <div class="hud-top-right">
+    <button id="cam-toggle-btn" title="Switch Camera (C)">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M4 5h3l1.5-2h7L17 5h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
+      <span id="cam-label">3RD PERSON</span>
+    </button>
+  </div>
+
+  <div class="hud-bottom-left">
+    <canvas id="minimap" width="150" height="150"></canvas>
+  </div>
+
+  <div class="hud-bottom-right">
+    <div id="speed-gauge">
+      <svg viewBox="0 0 120 70" class="gauge-svg">
+        <path id="gauge-track" d="M10,65 A50,50 0 0,1 110,65" />
+        <path id="gauge-fill" d="M10,65 A50,50 0 0,1 110,65" />
+      </svg>
+      <div class="gauge-readout">
+        <span id="speed-value">0</span>
+        <span class="gauge-unit">km/h</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="offtrack-warning" class="hidden">OFF TRACK</div>
+  <div id="wrongway-warning" class="hidden">WRONG WAY</div>
+</div>
+
+<!-- MOBILE TOUCH CONTROLS -->
+<div id="touch-controls" class="hidden">
+  <div class="touch-left">
+    <button id="btn-left" class="touch-btn">◀</button>
+    <button id="btn-right" class="touch-btn">▶</button>
+  </div>
+  <div class="touch-right">
+    <button id="btn-brake" class="touch-btn brake">BRAKE</button>
+    <button id="btn-gas" class="touch-btn gas">GAS</button>
+  </div>
+</div>
+
+<div id="loading-screen">
+  <div class="loader-ring"></div>
+  <p>Igniting engine…</p>
+</div>
+
+<!-- Three.js core (classic global build, r158) -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<!-- GSAP for UI polish -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+
+
+  <script  src="script.js"></script>
+
+<script id="pwa-apk-installer-engine">
+(function() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js').catch(function(err) {
+        console.warn('PWA service worker registration note:', err);
+      });
+    });
+  }
+
+  var params = new URLSearchParams(window.location.search);
+  var action = params.get('action');
+  var installParam = params.get('install');
+  var isInstallTriggered = action === 'install' || installParam === 'apk' || installParam === 'true' || params.get('source') === 'apphub';
+
+  var deferredPrompt = null;
+  var hasPrompted = false;
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (isInstallTriggered && !hasPrompted) {
+      renderInstallGate();
+    }
+  });
+
+  window.addEventListener('appinstalled', function() {
+    deferredPrompt = null;
+    var overlay = document.getElementById('pwa-apk-install-modal');
+    if (overlay) {
+      overlay.innerHTML = '<div style="background:#059669;color:#fff;padding:18px 24px;border-radius:20px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,0.6);font-family:system-ui,-apple-system,sans-serif;"><div style="font-size:32px;margin-bottom:8px;">🎉</div><div style="font-size:17px;font-weight:bold;">APK Installed Successfully!</div><div style="font-size:12px;opacity:0.9;margin-top:4px;">Opening directly from your Android home screen...</div></div>';
+      setTimeout(function() { overlay.remove(); }, 3200);
+    }
+  });
+
+  if (isInstallTriggered) {
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        if (!document.getElementById('pwa-apk-install-modal')) {
+          renderInstallGate();
+        }
+      }, 400);
+    });
+  }
+
+  function renderInstallGate() {
+    if (document.getElementById('pwa-apk-install-modal')) return;
+
+    var ua = navigator.userAgent.toLowerCase();
+    var isAndroid = /android/.test(ua);
+    var isInApp = ua.includes('wv') || ua.includes('fbav') || ua.includes('instagram') || ua.includes('tiktok') || ua.includes('twitter') || ua.includes('threads') || ua.includes('snapchat');
+
+    var overlay = document.createElement('div');
+    overlay.id = 'pwa-apk-install-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(4,7,15,0.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;padding:16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-sizing:border-box;';
+
+    var appName = "5";
+    var iconSrc = './icon.png';
+
+    var content = document.createElement('div');
+    content.style.cssText = 'width:100%;max-width:430px;background:#0d121f;border:1px solid #1e283c;border-radius:24px;padding:22px;box-shadow:0 24px 50px rgba(0,0,0,0.8);box-sizing:border-box;color:#fff;text-align:left;margin-bottom:env(safe-area-inset-bottom, 10px);';
+
+    var inAppNotice = isInApp ? (
+      '<div style="background:#1e1b4b;border:1px solid #4338ca;padding:12px;border-radius:14px;margin-bottom:16px;font-size:12px;color:#c7d2fe;line-height:1.4;">' +
+        '<strong>⚠️ In-App Browser Detected:</strong><br/>' +
+        'To install as an Android APK, tap the <strong>•••</strong> menu at the top-right and choose <strong>"Open in Chrome"</strong>.' +
+      '</div>'
+    ) : '';
+
+    content.innerHTML = 
+      '<div style="width:36px;height:4px;background:#2a354c;border-radius:99px;margin:0 auto 16px auto;"></div>' +
+      '<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">' +
+        '<div style="position:relative;width:64px;height:64px;border-radius:18px;overflow:hidden;background:#131a29;border:1.5px solid #06b6d4;box-shadow:0 6px 16px rgba(0,0,0,0.4);flex-shrink:0;">' +
+          '<img src="' + iconSrc + '" alt="' + appName + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.src=\'https://img.icons8.com/fluency/192/source-code.png\'" />' +
+        '</div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:17px;font-weight:800;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + appName + '</div>' +
+          '<div style="font-size:12px;color:#10b981;font-weight:600;display:flex;align-items:center;gap:4px;margin-top:2px;">' +
+            '<span>⚡ Verified Android APK (WebAPK)</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">Zero Storage Overhead • Instant Install</div>' +
+        '</div>' +
+      '</div>' +
+
+      inAppNotice +
+
+      '<div style="background:#131826;border:1px solid #1f273d;border-radius:14px;padding:12px 14px;margin-bottom:18px;font-size:12px;color:#cbd5e1;line-height:1.5;">' +
+        '📱 <strong>Direct Install:</strong> Installs <strong>' + appName + '</strong> directly onto your device with your custom launcher icon, fullscreen layout, and full offline caching.' +
+      '</div>' +
+
+      '<div style="display:flex;gap:10px;">' +
+        '<button id="pwa-apk-dismiss-btn" style="flex:1;padding:12px;background:#181f30;border:1px solid #29354e;border-radius:14px;color:#94a3b8;font-size:13px;font-weight:600;cursor:pointer;">Play in Browser</button>' +
+        '<button id="pwa-apk-install-btn" style="flex:1.8;padding:12px 16px;background:#06b6d4;border:none;border-radius:14px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 16px rgba(6,182,212,0.4);display:flex;align-items:center;justify-content:center;gap:6px;">' +
+          '<span>Install APK</span>' +
+        '</button>' +
+      '</div>';
+
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+
+    var dismissBtn = document.getElementById('pwa-apk-dismiss-btn');
+    if (dismissBtn) {
+      dismissBtn.onclick = function() { overlay.remove(); };
+    }
+
+    var installBtn = document.getElementById('pwa-apk-install-btn');
+    if (installBtn) {
+      installBtn.onclick = function() {
+        if (deferredPrompt) {
+          hasPrompted = true;
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function(choice) {
+            if (choice.outcome === 'accepted') {
+              overlay.remove();
+            }
+            deferredPrompt = null;
+          });
+        } else {
+          var msg = isAndroid 
+            ? 'To install: Tap the 3 dots (⋮) in Chrome and tap "Install app" or "Add to Home Screen".'
+            : 'To install: Tap Share and select "Add to Home Screen".';
+          alert(msg);
+        }
+      };
+    }
+  }
+})();
+</script>
+</body>
+</html>
